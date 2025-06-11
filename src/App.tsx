@@ -15,6 +15,7 @@ import {
   FaChevronDown,
 } from "react-icons/fa"
 import { useMediaQuery } from "react-responsive"
+import { IconType } from "react-icons"
   
 // Constantes
 const REGISTER_URL = "https://sportsbet.bet.ar/registrarse?utm_source=publi1lauguty&utm_brandaffiliate=publi1lauguty"
@@ -47,8 +48,15 @@ const benefits = [
   },
 ]
 
+interface AnimatedButtonProps {
+  children: React.ReactNode;
+  href: string;
+  className?: string;
+  primary?: boolean;
+}
+
 // Componente de botón animado
-const AnimatedButton = ({ children, href, className = "", primary = false }) => {
+const AnimatedButton = ({ children, href, className = "", primary = false }: AnimatedButtonProps) => {
   return (
     <motion.a
       href={href}
@@ -72,8 +80,17 @@ const AnimatedButton = ({ children, href, className = "", primary = false }) => 
   )
 }
 
+interface BenefitCardProps {
+  icon: IconType;
+  title: string;
+  desc: string;
+  color: string;
+  highlight: string;
+  index: number;
+}
+
 // Componente de tarjeta de beneficio
-const BenefitCard = ({ icon: Icon, title, desc, color, highlight, index }) => {
+const BenefitCard = ({ icon: Icon, title, desc, color, highlight, index }: BenefitCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -107,46 +124,7 @@ const BenefitCard = ({ icon: Icon, title, desc, color, highlight, index }) => {
   )
 }
 
-// Componente de tarjeta de testimonio
-const TestimonialCard = ({ name, age, location, quote, rating, active }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: active ? 1 : 0.5, scale: active ? 1 : 0.9 }}
-      transition={{ duration: 0.4 }}
-      className={`mx-4 flex h-full flex-col rounded-3xl bg-white p-6 shadow-[0_0_60px_0_rgba(19,156,0,0.25)] transition-all duration-300 ${
-        active ? "shadow-xl" : "shadow-md"
-      }`}
-    >
-      <div className="mb-4 flex justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold text-white"
-            style={{ background: `linear-gradient(to bottom right, #29AF05 70%, #FFD700)` }}
-          >
-            {name.charAt(0)}
-          </div>
-          <div>
-            <h4 className="font-bold text-gray-900">{name}</h4>
-            <p className="text-sm text-gray-500">
-              {age} años • {location}
-            </p>
-          </div>
-        </div>
-        <div className="flex">
-          {[...Array(rating)].map((_, i) => (
-            <FaStar key={i} className="text-yellow-400" />
-          ))}
-        </div>
-      </div>
-      <div className="relative flex-grow">
-        <FaQuoteLeft className="absolute -left-1 -top-1 text-indigo-200 opacity-50" size={20} />
-        <p className="my-4 px-4 text-gray-600">{quote}</p>
-        <FaQuoteRight className="absolute -bottom-1 -right-1 text-indigo-200 opacity-50" size={20} />
-      </div>
-    </motion.div>
-  )
-}
+
 
 // Componente principal
 export default function Home() {
@@ -165,7 +143,7 @@ export default function Home() {
   }, [])
 
   // Referencia para la sección de características
-  const featuresRef = useRef(null)
+  const featuresRef = useRef<HTMLDivElement>(null)
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: "smooth" })
   }
