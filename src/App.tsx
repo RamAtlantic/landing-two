@@ -61,21 +61,15 @@ const AnimatedButton = ({ children, href, className = "", primary = false }: Ani
     <motion.a
       href={href}
       className={`relative inline-flex items-center justify-center overflow-hidden rounded-full px-8 py-4 font-bold transition-all duration-300 ease-out ${
-        primary ? "text-white hover:from-green-700 hover:to-yellow-600" : "bg-white text-green-600 hover:bg-gray-100"
+        primary
+          ? "text-white bg-gradient-to-r from-[#EC3765] to-[#FFD700] hover:from-[#29AF05] hover:to-[#FFD700]"
+          : "bg-white text-[#EC3765] hover:bg-[#29AF05] hover:text-white"
       } ${className}`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.98 }}
-      style={primary ? { background: `linear-gradient(to right, #29AF05 70%, #FFD700)` } : {}}
+      style={primary ? {} : {}}
     >
       <span className="relative z-10 flex items-center gap-2">{children}</span>
-      {primary && (
-        <motion.span
-          className="absolute inset-0 z-0 opacity-0 transition-opacity duration-300"
-          style={{ background: `linear-gradient(to right, #FFD700 30%, #29AF05)` }}
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
-        />
-      )}
     </motion.a>
   )
 }
@@ -164,6 +158,7 @@ export default function Home() {
       </motion.div>
 
       {/* Navbar */}
+      {!isMobile && (
       <header className={`fixed left-0 right-0 top-0 z-50 bg-transparent py-5 border-b border-white/10 transition-all duration-300 ${isScrolled ? 'backdrop-blur-sm bg-black/20' : ''}`}>
         <div className="container mx-auto flex items-center justify-between px-4">
           <motion.div
@@ -182,7 +177,7 @@ export default function Home() {
                 e.preventDefault()
                 scrollToFeatures()
               }}
-              className="text-sm font-medium text-white transition-colors hover:text-indigo-600"
+              className="text-sm font-medium text-white transition-colors hover:text-[#EB3765]"
               whileHover={{ scale: 1.05 }}
             >
               Características
@@ -251,10 +246,12 @@ export default function Home() {
           )}
         </AnimatePresence>
       </header>
+      )}
 
       {/* Hero Section */}
       <section className="flex flex-col-reverse lg:flex-row items-center justify-between px-6 py-16 md:py-32 bg-[#0B0D0B]">
         <div className="w-full lg:w-1/2 text-center lg:text-left">
+          {!isMobile && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -264,6 +261,7 @@ export default function Home() {
             <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-indigo-600"></span>
             Experiencia Premium
           </motion.div>
+          )}
           <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
             Únete a la comunidad más{" "}
             <span
@@ -278,14 +276,17 @@ export default function Home() {
             </span>{" "}
             de entretenimiento
           </h1>
+          {!isMobile && (
           <p className="mb-8 text-lg text-white md:text-xl">
             Descubre un mundo de beneficios exclusivos, experiencias únicas y acceso VIP a los mejores eventos y
             promociones.
           </p>
+          )}
           <div className="flex flex-col items-center gap-4 sm:flex-row md:justify-start">
             <AnimatedButton href={REGISTER_URL} primary className="w-full sm:w-auto">
               Comenzar Ahora <FaGift />
             </AnimatedButton>
+            {!isMobile && (
             <motion.button
               onClick={scrollToFeatures}
               className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-8 py-4 font-bold text-gray-700 transition-colors hover:bg-gray-100 sm:w-auto"
@@ -294,7 +295,9 @@ export default function Home() {
             >
               Ver Beneficios <FaChevronDown />
             </motion.button>
+            )}
           </div>
+          {!isMobile && (
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 md:justify-start">
             <div className="flex -space-x-2">
               {[...Array(4)].map((_, i) => (
@@ -311,6 +314,7 @@ export default function Home() {
               <span className="font-bold text-[#F9A703]">+2,500</span> miembros ya se unieron
             </div>
           </div>
+          )}
         </div>
         <div className="w-full lg:w-1/2 flex justify-center mb-10 lg:mb-0">
           <img
@@ -322,6 +326,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
+
       <section ref={featuresRef} id="features" className="py-20">
         <div className="container mx-auto px-4">
           <div className="mb-16 text-center">
@@ -375,6 +380,7 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      
 
       {/* CTA Section */}
       {!isMobile && (
@@ -419,9 +425,9 @@ export default function Home() {
                       <div className="flex flex-wrap gap-4">
                         <AnimatedButton 
                           href={REGISTER_URL} 
-                          className="group relative overflow-hidden shadow-[0_0_60px_0_rgba(19,156,0,0.25)]"
+                          className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)]"
                         >
-                          <span className="relative z-10 flex items-center gap-2">
+                          <span className="relative z-10 flex items-center gap-2 text-white">
                             Registrarme Ahora <FaUserPlus className="transition-transform group-hover:translate-x-1" />
                           </span>
                           
