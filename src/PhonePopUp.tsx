@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { FaWhatsapp, FaTimes, FaCheck } from "react-icons/fa"
+import { FaTimes, FaCheck, FaUserPlus } from "react-icons/fa"
 import { MdSend } from "react-icons/md"
+import { saveLandingData } from './services/landingService'
+import CountdownTimer from './components/CountdownTimer'
 
 interface PhonePopupProps {
   isOpen: boolean
@@ -16,10 +18,14 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState<"input" | "success">("input")
   const [error, setError] = useState<string | null>(null)
+  const [targetDate] = useState(() => {
+    const date = new Date()
+    date.setHours(date.getHours() + 17)
+    return date
+  })
 
   // Validar número de teléfono mientras el usuario escribe
   useEffect(() => {
-    // Validación para números argentinos (10 dígitos, comenzando con código de área)
     const isValidPhone = /^(?:(?:00)?549?)?0?(?:11|[2368]\d)(?:(?=\d{0,2}15)\d{2})??\d{8}$/.test(phoneNumber)
     setIsValid(isValidPhone)
     if (phoneNumber && !isValidPhone) {
@@ -29,65 +35,38 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
     }
   }, [phoneNumber])
 
-  // Formatear número de teléfono mientras el usuario escribe
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Solo permitir dígitos
     const value = e.target.value.replace(/\D/g, "")
     setPhoneNumber(value)
   }
 
-  // Enviar mensaje de WhatsApp vía Twilio
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!isValid) return
     
     setIsSubmitting(true)
-    setError(null) // Reset error on new submission
+    setError(null)
 
     try {
-      // Format phone number for the API (ensure E.164 format like +54911...)
-      let formattedPhone = phoneNumber
-      if (!formattedPhone.startsWith('+')) {
-        // Assuming the API expects +54 followed by the number (including mobile 9 if applicable)
-        formattedPhone = `+54${phoneNumber}` 
+      const success = await saveLandingData(phoneNumber)
+      if (success) {
+        setStep("success")
+      } else {
+        setError("Hubo un error al guardar los datos. Por favor, intenta nuevamente.")
       }
-
-      // Call your backend API endpoint
-      const response = await fetch("http://localhost:3000/api/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          phone: formattedPhone, // Send the formatted number
-        }),
-      })
-
-      if (!response.ok) {
-        // Try to get error message from backend response
-        let errorMsg = "Error al enviar el mensaje desde el servidor."
-        try {
-          const errorData = await response.json()
-          errorMsg = errorData.error || errorMsg
-        } catch (parseError) {
-          // Ignore if response is not JSON
-        }
-        throw new Error(errorMsg)
-      }
-
-      // Mostrar mensaje de éxito
-      setStep("success")
     } catch (err: any) {
-      console.error("Error calling the send API:", err)
-      setError(err.message || "No pudimos enviar el mensaje. Verifica tu conexión o intenta más tarde.")
+      console.error("Error al guardar los datos:", err)
+      setError("Hubo un error al guardar los datos. Por favor, intenta nuevamente.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  if (!isOpen) return null
+
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -102,10 +81,10 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="w-full max-w-md bg-[#2c2c2c] rounded-xl overflow-hidden shadow-2xl border border-brand-green/30"
+            className="w-full max-w-md bg-[#2c2c2c] rounded-xl overflow-hidden shadow-2xl border border-[#29AF05]/30"
           >
             {/* Header */}
-            <div className="relative bg-gradient-to-r from-[#212121] to-[#2a2a2a] p-4 border-b border-brand-green/20">
+            <div className="relative bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] p-4">
               <button
                 onClick={onClose}
                 className="absolute right-4 top-4 text-white/70 hover:text-white transition-colors"
@@ -114,11 +93,11 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                 <FaTimes />
               </button>
               <div className="flex items-center gap-3">
-                <div className="bg-brand-green rounded-full p-2 text-[#212121]">
-                  <FaWhatsapp size={24} />
+                <div className="bg-white rounded-full p-2 text-[#EC3765]">
+                  <FaUserPlus size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-white">
-                  {step === "input" ? "Recibí tu código por WhatsApp" : "¡Mensaje enviado!"}
+                  {step === "input" ? "¡Regístrate Ahora!" : "¡Registro Exitoso!"}
                 </h3>
               </div>
             </div>
@@ -128,7 +107,7 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
               {step === "input" ? (
                 <form onSubmit={handleSubmit}>
                   <p className="text-white/80 mb-4">
-                    Ingresá tu número de teléfono para recibir un código exclusivo y acceder a beneficios especiales.
+                    Ingresá tu número de teléfono para registrarte y acceder a beneficios exclusivos.
                   </p>
                   
                   <div className="mb-4">
@@ -144,11 +123,11 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                         placeholder="Ej: 1123456789"
                         className={`w-full bg-[#3a3a3a] border ${
                           error ? "border-red-500" : "border-white/20"
-                        } rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-green/50`}
+                        } rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#29AF05]/50`}
                         autoFocus
                       />
                       {isValid && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#29AF05]">
                           <FaCheck />
                         </div>
                       )}
@@ -162,7 +141,7 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                       disabled={!isValid || isSubmitting}
                       className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
                         isValid && !isSubmitting
-                          ? "bg-brand-green text-[#212121] hover:bg-brand-green/90"
+                          ? "bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] text-white hover:from-[#29AF05] hover:to-[#FFD700]"
                           : "bg-gray-600 text-white/50 cursor-not-allowed"
                       }`}
                     >
@@ -174,7 +153,7 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                       ) : (
                         <>
                           <MdSend />
-                          <span>Enviar código</span>
+                          <span>Registrarme</span>
                         </>
                       )}
                     </button>
@@ -182,16 +161,20 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                 </form>
               ) : (
                 <div className="text-center py-4">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FaCheck className="text-green-500" size={32} />
+                  <div className="w-16 h-16 bg-[#29AF05]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FaCheck className="text-[#29AF05]" size={32} />
                   </div>
-                  <h4 className="text-xl font-bold text-white mb-2">¡Código enviado!</h4>
+                  <h4 className="text-xl font-bold text-white mb-2">¡Registro Exitoso!</h4>
                   <p className="text-white/70 mb-6">
-                    Hemos enviado un mensaje a tu WhatsApp con el código y el link para utilizarlo.
+                    Te enviaremos un mensaje con los siguientes pasos para completar tu registro.
                   </p>
+                  <div className="text-center mb-4">
+                    <p className="text-white/50 text-sm mb-2">Oferta válida por:</p>
+                    <CountdownTimer targetDate={targetDate} />
+                  </div>
                   <button
                     onClick={onClose}
-                    className="px-6 py-2 bg-brand-green text-[#212121] rounded-lg font-medium hover:bg-brand-green/90 transition-colors"
+                    className="px-6 py-2 bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] text-white rounded-lg font-medium hover:from-[#29AF05] hover:to-[#FFD700] transition-all"
                   >
                     Entendido
                   </button>

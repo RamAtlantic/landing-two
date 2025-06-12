@@ -16,19 +16,18 @@ import {
 } from "react-icons/fa"
 import { useMediaQuery } from "react-responsive"
 import { IconType } from "react-icons"
+import PhonePopup from './PhonePopUp'
+import CountdownTimer from './components/CountdownTimer'
   
 // Constantes
 const REGISTER_URL = "https://sportsbet.bet.ar/registrarse?utm_source=publi1lauguty&utm_brandaffiliate=publi1lauguty"
-
-// Datos de testimonios
-
 
 // Datos de beneficios
 const benefits = [
   {
     icon: FaGift,
     title: "Bonos Premium",
-    desc: "Beneficios exclusivos para nuevos miembros.",
+    desc: "Beneficios exclusivos para nuevos miembros.",  
     color: "from-green-500 to-indigo-600",
     highlight: "200%",
   },
@@ -126,6 +125,7 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" })
+  const [showPopup, setShowPopup] = useState(false)
 
   // Efecto para detectar scroll
   useEffect(() => {
@@ -145,6 +145,13 @@ export default function Home() {
   // Animación de scroll para el fondo
   const { scrollYProgress } = useScroll()
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
+
+  const handleOpenPopup = () => {
+    // Agregar el parámetro popup a la URL
+    const url = new URL(window.location.href)
+    url.searchParams.set('popup', 'register')
+    window.history.pushState({}, '', url.toString())
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#0a0a0a] flex flex-col">
@@ -423,15 +430,14 @@ export default function Home() {
                         Únete ahora y obtén acceso inmediato a todos los beneficios exclusivos que tenemos para ti.
                       </p>
                       <div className="flex flex-wrap gap-4">
-                        <AnimatedButton 
-                          href={REGISTER_URL} 
-                          className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)]"
+                        <button 
+                          onClick={() => setShowPopup(true)}
+                          className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)] rounded-full px-8 py-4"
                         >
                           <span className="relative z-10 flex items-center gap-2 text-white">
                             Registrarme Ahora <FaUserPlus className="transition-transform group-hover:translate-x-1" />
                           </span>
-                          
-                        </AnimatedButton>
+                        </button>
                         <div className="flex items-center gap-2 text-white/80">
                           <MdOutlineVerified className="text-2xl text-[#29AF05]" />
                           <span>Registro en menos de 2 minutos</span>
@@ -478,6 +484,9 @@ export default function Home() {
                             $250.000
                           </motion.p>
                           <p className="mt-2 text-sm text-white/80">Válido por tiempo limitado</p>
+                          <div className="mt-2 flex justify-center">
+                            <CountdownTimer targetDate={(() => { const d = new Date(); d.setHours(d.getHours() + 17); return d; })()} />
+                          </div>
                         </div>
                       </motion.div>
                     </div>
@@ -493,6 +502,11 @@ export default function Home() {
       <footer className="w-full py-8 text-center text-gray-400 text-sm bg-[#0a0a0a] border-t border-gray-700">
         © 2024 Premium Experience. Todos los derechos reservados.
       </footer>
+
+      <PhonePopup 
+        isOpen={showPopup} 
+        onClose={() => setShowPopup(false)} 
+      />
     </div>
   )
 }
