@@ -20,7 +20,7 @@ import PhonePopup from './PhonePopUp'
 import CountdownTimer from './components/CountdownTimer'
   
 // Constantes
-const REGISTER_URL = "https://sportsbet.bet.ar/registrarse?utm_source=publi1lauguty&utm_brandaffiliate=publi1lauguty"
+const REGISTER_URL = "https://mooneymaker.co/?ref=63904"
 
 // Datos de beneficios
 const benefits = [
