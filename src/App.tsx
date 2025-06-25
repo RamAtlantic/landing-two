@@ -18,9 +18,10 @@ import { useMediaQuery } from "react-responsive"
 import { IconType } from "react-icons"
 import PhonePopup from './PhonePopUp'
 import CountdownTimer from './components/CountdownTimer'
+import { sendMetaEvent } from './services/metaEventService'
   
 // Constantes
-const REGISTER_URL = "https://mooneymaker.co/?ref=63904"
+const REGISTER_URL = import.meta.env.VITE_REGISTER_URL
 
 // Datos de beneficios
 const benefits = [
@@ -47,18 +48,51 @@ const benefits = [
   },
 ]
 
+// Función para manejar el registro y enviar evento a Meta
+const handleRegistration = async () => {
+  try {
+    // Generar un email temporal para el evento (en producción esto vendría del formulario de registro)
+    const tempEmail = `user_${Date.now()}@example.com`;
+    
+    // Enviar evento a Meta
+    const success = await sendMetaEvent(tempEmail, "10");
+    
+    if (success) {
+      console.log('Evento de registro enviado exitosamente a Meta');
+    } else {
+      console.warn('No se pudo enviar el evento a Meta');
+    }
+    
+    // Redirigir al usuario a la URL de registro
+    window.location.href = REGISTER_URL;
+  } catch (error) {
+    console.error('Error en el proceso de registro:', error);
+    // Aún redirigir al usuario aunque falle el evento
+    window.location.href = REGISTER_URL;
+  }
+}
+
 interface AnimatedButtonProps {
   children: React.ReactNode;
-  href: string;
+  href?: string;
+  onClick?: () => void;
   className?: string;
   primary?: boolean;
 }
 
 // Componente de botón animado
-const AnimatedButton = ({ children, href, className = "", primary = false }: AnimatedButtonProps) => {
+const AnimatedButton = ({ children, href, onClick, className = "", primary = false }: AnimatedButtonProps) => {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (href) {
+      window.location.href = href;
+    }
+  };
+
   return (
-    <motion.a
-      href={href}
+    <motion.button
+      onClick={handleClick}
       className={`relative inline-flex items-center justify-center overflow-hidden rounded-full px-8 py-4 font-bold transition-all duration-300 ease-out ${
         primary
           ? "text-white bg-gradient-to-r from-[#EC3765] to-[#FFD700] hover:from-[#29AF05] hover:to-[#FFD700]"
@@ -69,7 +103,7 @@ const AnimatedButton = ({ children, href, className = "", primary = false }: Ani
       style={primary ? {} : {}}
     >
       <span className="relative z-10 flex items-center gap-2">{children}</span>
-    </motion.a>
+    </motion.button>
   )
 }
 
@@ -189,7 +223,7 @@ export default function Home() {
             >
               Características
             </motion.a>
-            <AnimatedButton href={REGISTER_URL} primary>
+            <AnimatedButton onClick={handleRegistration} primary>
               Registrarse <FaUserPlus />
             </AnimatedButton>
           </nav>
@@ -241,13 +275,16 @@ export default function Home() {
                 >
                   Testimonios
                 </a>
-                <a
-                  href={REGISTER_URL}
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleRegistration();
+                  }}
                   className="flex items-center justify-center gap-2 rounded-full py-3 font-bold text-white"
                   style={{ background: `linear-gradient(to right, #29AF05 70%, #FFD700)` }}
                 >
                   Registrarse <FaUserPlus />
-                </a>
+                </button>
               </div>
             </motion.div>
           )}
@@ -290,7 +327,7 @@ export default function Home() {
           </p>
           )}
           <div className="flex flex-col items-center gap-4 sm:flex-row md:justify-start">
-            <AnimatedButton href={REGISTER_URL} primary className="w-full sm:w-auto">
+            <AnimatedButton onClick={handleRegistration} primary className="w-full sm:w-auto">
               Comenzar Ahora <FaGift />
             </AnimatedButton>
             {!isMobile && (
@@ -381,7 +418,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-16 flex justify-center"
           >
-            <AnimatedButton href={REGISTER_URL} primary>
+            <AnimatedButton onClick={handleRegistration} primary>
               Acceder a todos los beneficios <FaArrowRight />
             </AnimatedButton>
           </motion.div>
@@ -431,7 +468,10 @@ export default function Home() {
                       </p>
                       <div className="flex flex-wrap gap-4">
                         <button 
-                          onClick={() => setShowPopup(true)}
+                          onClick={() => {
+                            setShowPopup(true);
+                            handleRegistration();
+                          }}
                           className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)] rounded-full px-8 py-4"
                         >
                           <span className="relative z-10 flex items-center gap-2 text-white">
