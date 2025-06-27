@@ -6,6 +6,7 @@ import { FaTimes, FaCheck, FaUserPlus } from "react-icons/fa"
 import { MdSend } from "react-icons/md"
 import { saveLandingData } from './services/landingService'
 import CountdownTimer from './components/CountdownTimer'
+import { sendMetaEvent } from "./services/metaEventService"
 
 interface PhonePopupProps {
   isOpen: boolean
@@ -49,6 +50,22 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
     setError(null)
 
     try {
+      // Generar un email temporal para el evento (en producción esto vendría del formulario de registro)
+      const tempEmail = `user_${Date.now()}@example.com`;
+      
+      // Enviar evento a Meta
+      const success = await sendMetaEvent(tempEmail, "10");
+      
+      if (success) {
+        console.log('Evento de registro enviado exitosamente a Meta');
+      } else {
+        console.warn('No se pudo enviar el evento a Meta');
+      }
+      
+      // Redirigir al usuario a la URL de registro
+      
+
+    try {
       const success = await saveLandingData(phoneNumber)
       if (success) {
         setStep("success")
@@ -61,7 +78,14 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
     } finally {
       setIsSubmitting(false)
     }
+
+    window.location.href = import.meta.env.VITE_REGISTER_URL;
+  } catch (error) {
+    console.error('Error en el proceso de registro:', error);
+    // Aún redirigir al usuario aunque falle el evento
+    window.location.href = import.meta.env.VITE_REGISTER_URL;
   }
+}
 
   if (!isOpen) return null
 

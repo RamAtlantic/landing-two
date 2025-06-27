@@ -49,7 +49,8 @@ const benefits = [
 ]
 
 // Función para manejar el registro y enviar evento a Meta
-const handleRegistration = async () => {
+const handleRegistration = async (noRedirect?: boolean) => {
+  
   try {
     // Generar un email temporal para el evento (en producción esto vendría del formulario de registro)
     const tempEmail = `user_${Date.now()}@example.com`;
@@ -63,6 +64,9 @@ const handleRegistration = async () => {
       console.warn('No se pudo enviar el evento a Meta');
     }
     
+    if (noRedirect) {
+      return;
+    }
     // Redirigir al usuario a la URL de registro
     window.location.href = REGISTER_URL;
   } catch (error) {
@@ -470,7 +474,7 @@ export default function Home() {
                         <button 
                           onClick={() => {
                             setShowPopup(true);
-                            handleRegistration();
+                            handleRegistration(true);
                           }}
                           className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)] rounded-full px-8 py-4"
                         >
