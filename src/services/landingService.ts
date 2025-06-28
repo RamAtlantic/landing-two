@@ -3,16 +3,18 @@ import { db } from '../firebase';
 
 interface LandingData {
   telefono: string;
+  email: string;
   userAgent: string;
   fecha: string;
   hora: string;
 }
 
-export const saveLandingData = async (telefono: string) => {
+export const saveLandingData = async (telefono: string, email: string) => {
   try {
     const now = new Date();
     const landingData: LandingData = {
       telefono,
+      email,
       userAgent: navigator.userAgent,
       fecha: now.toLocaleDateString('es-AR'),
       hora: now.toLocaleTimeString('es-AR'),

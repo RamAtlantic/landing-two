@@ -15,6 +15,7 @@ interface PhonePopupProps {
 
 const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
   const [phoneNumber, setPhoneNumber] = useState("")
+  const [email, setEmail] = useState("")
   const [isValid, setIsValid] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState<"input" | "success">("input")
@@ -25,20 +26,44 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
     return date
   })
 
-  // Validar número de teléfono mientras el usuario escribe
+  // Función para generar el username
+  const generateUsername = (email: string, phone: string): string => {
+    const emailPrefix = email.split('@')[0].substring(0, 4)
+    const phoneSuffix = phone.slice(-4)
+    return `${emailPrefix}${phoneSuffix}`
+  }
+
+  // Función para generar la URL de redirección
+  const generateRedirectUrl = (email: string, phone: string): string => {
+    const username = generateUsername(email, phone)
+    const baseUrl = import.meta.env.VITE_REGISTER_URL || 'https://mooneymaker.co/home'
+    return `${baseUrl}#username=${username}&email=${email}&phone=${phone}`
+  }
+
+  // Validar número de teléfono y email mientras el usuario escribe
   useEffect(() => {
     const isValidPhone = /^(?:(?:00)?549?)?0?(?:11|[2368]\d)(?:(?=\d{0,2}15)\d{2})??\d{8}$/.test(phoneNumber)
-    setIsValid(isValidPhone)
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    const isFormValid = isValidPhone && isValidEmail && email.length > 0 && phoneNumber.length > 0
+    
+    setIsValid(isFormValid)
+    
     if (phoneNumber && !isValidPhone) {
       setError("Ingresa un número de teléfono válido")
+    } else if (email && !isValidEmail) {
+      setError("Ingresa un email válido")
     } else {
       setError(null)
     }
-  }, [phoneNumber])
+  }, [phoneNumber, email])
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "")
     setPhoneNumber(value)
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,11 +75,8 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
     setError(null)
 
     try {
-      // Generar un email temporal para el evento (en producción esto vendría del formulario de registro)
-      const tempEmail = `user_${Date.now()}@example.com`;
-      
       // Enviar evento a Meta
-      const success = await sendMetaEvent(tempEmail, "10");
+      const success = await sendMetaEvent(email, "10");
       
       if (success) {
         console.log('Evento de registro enviado exitosamente a Meta');
@@ -62,30 +84,33 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
         console.warn('No se pudo enviar el evento a Meta');
       }
       
-      // Redirigir al usuario a la URL de registro
-      
-
-    try {
-      const success = await saveLandingData(phoneNumber)
-      if (success) {
-        setStep("success")
-      } else {
+      // Guardar datos en Firebase
+      try { 
+        const success = await saveLandingData(phoneNumber, email)
+        if (success) {
+          setStep("success")
+        } else {
+          setError("Hubo un error al guardar los datos. Por favor, intenta nuevamente.")
+        }
+      } catch (err: any) {
+        console.error("Error al guardar los datos:", err)
         setError("Hubo un error al guardar los datos. Por favor, intenta nuevamente.")
+      } finally {
+        setIsSubmitting(false)
       }
-    } catch (err: any) {
-      console.error("Error al guardar los datos:", err)
-      setError("Hubo un error al guardar los datos. Por favor, intenta nuevamente.")
-    } finally {
-      setIsSubmitting(false)
-    }
 
-    window.location.href = import.meta.env.VITE_REGISTER_URL;
-  } catch (error) {
-    console.error('Error en el proceso de registro:', error);
-    // Aún redirigir al usuario aunque falle el evento
-    window.location.href = import.meta.env.VITE_REGISTER_URL;
+      // Generar URL de redirección y redirigir al usuario
+      const redirectUrl = generateRedirectUrl(email, phoneNumber)
+      console.log('Redirigiendo a:', redirectUrl)
+      window.location.href = redirectUrl
+      
+    } catch (error) {
+      console.error('Error en el proceso de registro:', error);
+      // Aún redirigir al usuario aunque falle el evento
+      const redirectUrl = generateRedirectUrl(email, phoneNumber)
+      window.location.href = redirectUrl
+    }
   }
-}
 
   if (!isOpen) return null
 
@@ -131,9 +156,33 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
               {step === "input" ? (
                 <form onSubmit={handleSubmit}>
                   <p className="text-white/80 mb-4">
-                    Ingresá tu número de teléfono para registrarte y acceder a beneficios exclusivos.
+                    Ingresá tu email y número de teléfono para registrarte y acceder a beneficios exclusivos.
                   </p>
                   
+                  <div className="mb-4">
+                    <label htmlFor="email" className="block text-sm font-medium text-white/70 mb-1">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={handleEmailChange}
+                        placeholder="tu@email.com"
+                        className={`w-full bg-[#3a3a3a] border ${
+                          error && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? "border-red-500" : "border-white/20"
+                        } rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#29AF05]/50`}
+                        autoFocus
+                      />
+                      {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#29AF05]">
+                          <FaCheck />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="mb-4">
                     <label htmlFor="phone" className="block text-sm font-medium text-white/70 mb-1">
                       Número de teléfono
@@ -146,11 +195,10 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
                         onChange={handlePhoneChange}
                         placeholder="Ej: 1123456789"
                         className={`w-full bg-[#3a3a3a] border ${
-                          error ? "border-red-500" : "border-white/20"
+                          error && phoneNumber && !/^(?:(?:00)?549?)?0?(?:11|[2368]\d)(?:(?=\d{0,2}15)\d{2})??\d{8}$/.test(phoneNumber) ? "border-red-500" : "border-white/20"
                         } rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#29AF05]/50`}
-                        autoFocus
                       />
-                      {isValid && (
+                      {phoneNumber && /^(?:(?:00)?549?)?0?(?:11|[2368]\d)(?:(?=\d{0,2}15)\d{2})??\d{8}$/.test(phoneNumber) && (
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#29AF05]">
                           <FaCheck />
                         </div>
@@ -208,7 +256,7 @@ const PhonePopup: React.FC<PhonePopupProps> = ({ isOpen, onClose }) => {
 
             {/* Footer */}
             <div className="bg-[#252525] px-6 py-3 text-xs text-white/50 text-center">
-              No compartiremos tu número con terceros. Aplican términos y condiciones.
+              No compartiremos tu información con terceros. Aplican términos y condiciones.
             </div>
           </motion.div>
         </motion.div>
