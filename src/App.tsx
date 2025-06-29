@@ -19,6 +19,7 @@ import { IconType } from "react-icons"
 import PhonePopup from './PhonePopUp'
 import CountdownTimer from './components/CountdownTimer'
 import { sendMetaEvent } from './services/metaEventService'
+import { useUserTracking } from "./context/TrakingContext"
   
 // Constantes
 const REGISTER_URL = import.meta.env.VITE_REGISTER_URL
@@ -49,7 +50,7 @@ const benefits = [
 ]
 
 // Función para manejar el registro y enviar evento a Meta
-const handleRegistration = async (noRedirect?: boolean) => {
+const handleRegistration = async (noRedirect?: boolean, sendTrackingData?: () => Promise<any>) => {
   
   try {
     // Generar un email temporal para el evento (en producción esto vendría del formulario de registro)
@@ -67,6 +68,16 @@ const handleRegistration = async (noRedirect?: boolean) => {
     if (noRedirect) {
       return;
     }
+
+    try {
+      if (sendTrackingData) {
+        await sendTrackingData();
+      }
+      console.log('Datos de tracking enviados exitosamente');
+    } catch (error) {
+      console.warn('Error enviando datos de tracking:', error);
+    }
+    
     // Redirigir al usuario a la URL de registro
     window.location.href = REGISTER_URL;
   } catch (error) {
@@ -165,6 +176,8 @@ export default function Home() {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" })
   const [showPopup, setShowPopup] = useState(false)
 
+  const { sendTrackingData } = useUserTracking()
+
   // Efecto para detectar scroll
   useEffect(() => {
     const handleScroll = () => {
@@ -183,13 +196,6 @@ export default function Home() {
   // Animación de scroll para el fondo
   const { scrollYProgress } = useScroll()
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
-
-  const handleOpenPopup = () => {
-    // Agregar el parámetro popup a la URL
-    const url = new URL(window.location.href)
-    url.searchParams.set('popup', 'register')
-    window.history.pushState({}, '', url.toString())
-  }
 
   return (
     <div className="min-h-screen w-full bg-[#0a0a0a] flex flex-col">
@@ -331,7 +337,7 @@ export default function Home() {
           </p>
           )}
           <div className="flex flex-col items-center gap-4 sm:flex-row md:justify-start">
-            <AnimatedButton onClick={handleRegistration} primary className="w-full sm:w-auto">
+            <AnimatedButton onClick={() => handleRegistration(false, sendTrackingData)} primary className="w-full sm:w-auto">
               Comenzar Ahora <FaGift />
             </AnimatedButton>
             {!isMobile && (
@@ -422,7 +428,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-16 flex justify-center"
           >
-            <AnimatedButton onClick={handleRegistration} primary>
+            <AnimatedButton onClick={() => handleRegistration(false, sendTrackingData)} primary>
               Acceder a todos los beneficios <FaArrowRight />
             </AnimatedButton>
           </motion.div>
@@ -474,7 +480,7 @@ export default function Home() {
                         <button 
                           onClick={() => {
                             setShowPopup(true);
-                            handleRegistration(true);
+                            handleRegistration(false, sendTrackingData);
                           }}
                           className="group hover:to-[#FFD700] hover:from-[#29AF05] relative overflow-hidden bg-gradient-to-r from-[#EC3765] via-[#FFD700] to-[#EC3765] shadow-[0_0_60px_0_rgba(19,156,0,0.25)] rounded-full px-8 py-4"
                         >
